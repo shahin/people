@@ -7,7 +7,7 @@ setup(
     author="Shahin",
 
     install_requires=[
-        'werkzeug<=0.10.4',
+        'werkzeug<=0.10.4', # 0.11.4 has logging issues, see werkzeug #...
         'flask', 
         'flask-sqlalchemy',
         'flask-restful',
