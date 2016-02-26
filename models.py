@@ -35,7 +35,8 @@ class User(db.Model):
         self.userid = userid
         self.first_name = first_name
         self.last_name = last_name
-        if group_names is None:
+
+        if group_names is None:  # [] goes through the JSON serialization wringer and becomes None
             group_names = []
         self.groups = self.add_groups(group_names)
 
