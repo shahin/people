@@ -8,9 +8,9 @@ class TestConfig(BaseConfig):
     PRESERVE_CONTEXT_ON_EXCEPTION = False
 
 class DevConfig(BaseConfig):
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///people.db'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/people.db'
     DEBUG = True
     PRESERVE_CONTEXT_ON_EXCEPTION = False
 
 class ProdConfig(BaseConfig):
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///people_prod.db'
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///tmp/people_prod.db'
