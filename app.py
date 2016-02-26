@@ -31,13 +31,7 @@ class Users_Meta(Resource):
 
     def post(self):
 
-        parser = reqparse.RequestParser()
-        parser.add_argument('first_name', type=str, help="The user's first name")
-        parser.add_argument('last_name', type=str, help="The user's last name")
-        parser.add_argument('userid', type=str, help="The user's identifier")
-        parser.add_argument('groups', action='append', help="The groups that this user is a member of")
-        args = parser.parse_args()
-
+        args = request.json
         new_user = User(
             *[ args.get(col, None) for col in ('userid', 'first_name', 'last_name', 'groups') ])
         db.session.add(new_user) 
@@ -60,13 +54,7 @@ class Users_Meta(Resource):
 
     def put(self, userid):
 
-        parser = reqparse.RequestParser()
-        parser.add_argument('first_name', type=str, help="The user's first name")
-        parser.add_argument('last_name', type=str, help="The user's last name")
-        parser.add_argument('userid', type=str, help="The user's identifier")
-        parser.add_argument('groups', action='append', help="The groups that this user is a member of")
-        args = parser.parse_args()
-
+        args = request.json
         updated_user = User(
             *[ args.get(col, None) for col in ('userid', 'first_name', 'last_name', 'groups') ])
 
