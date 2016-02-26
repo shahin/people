@@ -35,11 +35,11 @@ class Users_Meta(Resource):
         parser.add_argument('first_name', type=str, help="The user's first name")
         parser.add_argument('last_name', type=str, help="The user's last name")
         parser.add_argument('userid', type=str, help="The user's identifier")
-        parser.add_argument('groups', type=str, help="The groups that this user is a member of")
+        parser.add_argument('groups', action='append', help="The groups that this user is a member of")
         args = parser.parse_args()
 
         new_user = User(
-            *[ user_record[col] for col in ('userid', 'first_name', 'last_name', 'groups') ])
+            *[ args.get(col, None) for col in ('userid', 'first_name', 'last_name', 'groups') ])
         db.session.add(new_user) 
 
         try:
@@ -56,19 +56,21 @@ class Users_Meta(Resource):
         else:
             db.session.delete(user)
             db.session.commit()
-            return userid, 201
+            return userid, 410
 
     def put(self, userid):
 
         parser = reqparse.RequestParser()
-        parser.add_argument('user', type=str, help="A valid user record for an existing userid")
+        parser.add_argument('first_name', type=str, help="The user's first name")
+        parser.add_argument('last_name', type=str, help="The user's last name")
+        parser.add_argument('userid', type=str, help="The user's identifier")
+        parser.add_argument('groups', action='append', help="The groups that this user is a member of")
         args = parser.parse_args()
 
-        user_record = json.loads(args['user'])
         updated_user = User(
-            *[ user_record[col] for col in ('userid', 'first_name', 'last_name', 'groups') ])
+            *[ args.get(col, None) for col in ('userid', 'first_name', 'last_name', 'groups') ])
 
-        self.delete(user_record['userid'])
+        self.delete(updated_user.userid)
         db.session.add(updated_user)
         db.session.commit()
 
@@ -83,7 +85,7 @@ class Groups_Meta(Resource):
     def post(self):
 
         parser = reqparse.RequestParser()
-        parser.add_argument('name', type=str, help="The user's first name")
+        parser.add_argument('name', type=str, help="The group name")
         args = parser.parse_args()
 
         new_group = Group(args['name'])
@@ -101,14 +103,13 @@ class Groups_Meta(Resource):
         parser.add_argument('userids', type=str,
                 help="A list of userids for all members of this group")
         args = parser.parse_args()
-        userids = json.loads(args['userids'])
 
         # delete all old associations with this group
         self.delete(group_name)
 
         # re-create the group with all POSTed associations
         db.session.add(group_name)
-        for userid in userids:
+        for userid in args['userids']:
             member = User.query.filter(User.userid == userid).first()
             member.groups.append(group_name)
         db.session.commit()
@@ -121,7 +122,7 @@ class Groups_Meta(Resource):
         else:
             db.session.delete(group)
             db.session.commit()
-            return group_name, 201
+            return group_name, 410
 
     
 api.add_resource(Users_Meta, '/users/<string:userid>', '/users')
