@@ -11,5 +11,6 @@ setup(
         'flask', 
         'flask-sqlalchemy',
         'flask-restful',
+        'flask-testing',
     ],
 )
