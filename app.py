@@ -98,20 +98,17 @@ class Groups_Meta(Resource):
             abort(409) # trying to add a duplicate group
 
     def put(self, group_name):
-
-        parser = reqparse.RequestParser()
-        parser.add_argument('userids', type=str,
-                help="A list of userids for all members of this group")
-        args = parser.parse_args()
+        userids = request.json
 
         # delete all old associations with this group
         self.delete(group_name)
 
         # re-create the group with all POSTed associations
-        db.session.add(group_name)
-        for userid in args['userids']:
+        group = Group(group_name)
+        db.session.add(group)
+        for userid in userids:
             member = User.query.filter(User.userid == userid).first()
-            member.groups.append(group_name)
+            member.groups.append(group)
         db.session.commit()
 
     def delete(self, group_name):
