@@ -1,15 +1,15 @@
+import os
+
 from flask import Flask, request, abort
 from flask_restful import Resource, Api
 from flask.ext.sqlalchemy import SQLAlchemy
-import json
 
 from flask_restful import reqparse
 from sqlalchemy.exc import IntegrityError
 
 def create_app():
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///people.db'
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+    app.config.from_object(os.environ.get('PEOPLE_CONFIG', 'config.DevConfig'))
     db = SQLAlchemy(app)
     return app, db
 
