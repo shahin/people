@@ -28,7 +28,7 @@ class User(db.Model):
     groups = db.relationship(
         'Group',
         secondary=users_groups,
-        backref=db.backref('user'),
+        backref=db.backref('users'),
     )
 
     def __init__(self, userid, first_name, last_name, group_names):

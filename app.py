@@ -43,7 +43,7 @@ class Users_Meta(Resource):
             db.session.commit()
             return args, 201
         except IntegrityError:
-            abort(409)
+            abort(409) # trying to add a duplicate user
 
     def delete(self, userid):
         user = User.query.filter(User.userid == userid).first()
@@ -59,14 +59,39 @@ class Groups_Meta(Resource):
 
     def get(self, group_name):
         group = Group.query.filter(Group.group_name == group_name).first()
+        if group is None:
+            abort(404)
+        return [ u.userid for u in group.users ]
+
+    def post(self):
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('name', type=str, help="The user's first name")
+        args = parser.parse_args()
+
+        new_group = Group(args['name'])
+        db.session.add(new_group) 
+
+        try:
+            db.session.commit()
+            return args, 201
+        except IntegrityError:
+            abort(409) # trying to add a duplicate group
+
+    def delete(self, group_name):
+        group = Group.query.filter(Group.group_name == group_name).first()
 
         if group is None:
             abort(404)
+        else:
+            db.session.delete(group)
+            db.session.commit()
+            return group_name, 201
 
-        return [ u.userid for u in User.query.join(Group).filter(Group.group_name == group_name) ]
+    
 
 api.add_resource(Users_Meta, '/users/<string:userid>', '/users')
-api.add_resource(Groups_Meta, '/groups/<string:group_name>')
+api.add_resource(Groups_Meta, '/groups/<string:group_name>', '/groups')
 
 if __name__ == '__main__':
      app.run(debug=True)
