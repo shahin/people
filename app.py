@@ -25,7 +25,9 @@ class Users_Meta(Resource):
         if user is None:
             abort(404)
         else:
-            return { k: getattr(user, k) for k in ['userid', 'first_name', 'last_name', 'groups'] }
+            user_dict = { k: getattr(user, k) for k in ['userid', 'first_name', 'last_name', 'groups'] }
+            user_dict['groups'] = [ g.group_name for g in user_dict['groups'] ]
+            return user_dict
 
     def post(self):
 
