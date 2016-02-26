@@ -1,7 +1,7 @@
 from flask import Flask, request, abort
 from flask_restful import Resource, Api
 from flask.ext.sqlalchemy import SQLAlchemy
-from json import dumps
+import json
 
 from flask_restful import reqparse
 from sqlalchemy.exc import IntegrityError
@@ -36,7 +36,8 @@ class Users_Meta(Resource):
         parser.add_argument('groups', type=str, help="The groups that this user is a member of")
         args = parser.parse_args()
 
-        new_user = User(args['userid'], args['first_name'], args['last_name'], args['groups'])
+        new_user = User(
+            *[ user_record[col] for col in ('userid', 'first_name', 'last_name', 'groups') ])
         db.session.add(new_user) 
 
         try:
@@ -54,6 +55,20 @@ class Users_Meta(Resource):
             db.session.delete(user)
             db.session.commit()
             return userid, 201
+
+    def put(self, userid):
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('user', type=str, help="A valid user record for an existing userid")
+        args = parser.parse_args()
+
+        user_record = json.loads(args['user'])
+        updated_user = User(
+            *[ user_record[col] for col in ('userid', 'first_name', 'last_name', 'groups') ])
+
+        self.delete(user_record['userid'])
+        db.session.add(updated_user)
+        db.session.commit()
 
 class Groups_Meta(Resource):
 
@@ -78,6 +93,24 @@ class Groups_Meta(Resource):
         except IntegrityError:
             abort(409) # trying to add a duplicate group
 
+    def put(self, group_name):
+
+        parser = reqparse.RequestParser()
+        parser.add_argument('userids', type=str,
+                help="A list of userids for all members of this group")
+        args = parser.parse_args()
+        userids = json.loads(args['userids'])
+
+        # delete all old associations with this group
+        self.delete(group_name)
+
+        # re-create the group with all POSTed associations
+        db.session.add(group_name)
+        for userid in userids:
+            member = User.query.filter(User.userid == userid).first()
+            member.groups.append(group_name)
+        db.session.commit()
+
     def delete(self, group_name):
         group = Group.query.filter(Group.group_name == group_name).first()
 
@@ -89,7 +122,6 @@ class Groups_Meta(Resource):
             return group_name, 201
 
     
-
 api.add_resource(Users_Meta, '/users/<string:userid>', '/users')
 api.add_resource(Groups_Meta, '/groups/<string:group_name>', '/groups')
 
