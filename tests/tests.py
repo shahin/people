@@ -2,7 +2,7 @@ import unittest
 from base import PeopleTestCase
 from people.models import User, Group
 
-class FlaskTestCase(PeopleTestCase):
+class RESTTestCase(PeopleTestCase):
 
     def test_get_user_for_userid(self):
         response = self.client.get('/users/a')

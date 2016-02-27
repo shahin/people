@@ -61,8 +61,8 @@ class UsersResource(Resource):
     def put(self, userid):
         """Updates an existing user record.
         
-        The body of the request should be a valid user record. PUTs to a non-existant user return a
-        404."""
+        The body of the request should be a valid user record. PUTs to a non-existant user return
+        a 404."""
 
         args = request.json
 
@@ -82,8 +82,8 @@ class UsersResource(Resource):
 class GroupsResource(Resource):
 
     def get(self, group_name):
-        """Returns a JSON list of userids containing the members of that group. Returns a 404 if the
-        group doesn't exist."""
+        """Returns a JSON list of userids containing the members of that group. Returns a 404 if
+        the group doesn't exist."""
 
         group = Group.query.filter(Group.group_name == group_name).first()
         if group is None:
@@ -93,8 +93,8 @@ class GroupsResource(Resource):
     def post(self):
         """Creates a empty group.
         
-        POSTs to an existing group are treated as errors and flagged with the HTTP status code 409
-        (conflict). The body should contain a `name` parameter"""
+        POSTs to an existing group are treated as errors and flagged with the HTTP status code
+        409 (conflict). The body should contain a `name` parameter"""
 
         parser = reqparse.RequestParser()
         parser.add_argument('name', type=str, help="The group name")
@@ -110,8 +110,8 @@ class GroupsResource(Resource):
             abort(409) # trying to add a duplicate group
 
     def put(self, group_name):
-        """Updates the membership list for the group. The body of the request should be a JSON list
-        describing the group's members.
+        """Updates the membership list for the group. The body of the request should be a JSON
+        list describing the group's members.
         """
         userids = request.json
 
