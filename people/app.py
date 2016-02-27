@@ -65,10 +65,17 @@ class UsersResource(Resource):
         404."""
 
         args = request.json
+
+        user = User.query.filter(User.userid == args['userid']).first()
+        if user is None:
+            abort(404)
+        else:
+            db.session.delete(user)
+            db.session.commit()
+
         updated_user = User(
             *[ args.get(col, None) for col in ('userid', 'first_name', 'last_name', 'groups') ])
 
-        self.delete(updated_user.userid)
         db.session.add(updated_user)
         db.session.commit()
 
