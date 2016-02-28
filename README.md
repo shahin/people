@@ -25,5 +25,5 @@ python tests/tests.py
 
 ```bash
 python db_create.py
-python people/app.py
+python run.py
 ```
