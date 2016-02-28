@@ -40,7 +40,7 @@ class UsersResource(Resource):
             abort(409) # trying to add a duplicate user
 
     def delete(self, userid):
-        """Deletes a user record. Returns 404 if the user doesn't exist."""
+        """Deletes a user record. Returns 404 if the user doesn't exist, or 410 on success."""
 
         user = User.query.filter(User.userid == userid).first()
 
@@ -55,7 +55,7 @@ class UsersResource(Resource):
         """Updates an existing user record.
         
         The body of the request should be a valid user record. PUTs to a non-existant user return
-        a 404."""
+        a 404, and PUTs containing a non-existent group return 422."""
 
         args = request.json
 
@@ -121,6 +121,9 @@ class GroupsResource(Resource):
     def put(self, group_name):
         """Updates the membership list for the group. The body of the request should be a JSON
         list describing the group's members.
+
+        Returns 404 if the group does not exist or 422 if a user in the membership list does not
+        exist.
         """
         userids = request.json
 
@@ -156,7 +159,7 @@ class GroupsResource(Resource):
             abort(500)
 
     def delete(self, group_name):
-        """Deletes a group. Returns 404 if the group doesn't exist."""
+        """Deletes a group. Returns 404 if the group doesn't exist, or 410 on success."""
 
         group = Group.query.filter(Group.name == group_name).first()
 
