@@ -5,11 +5,13 @@ class BaseConfig(object):
 class TestConfig(BaseConfig):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'
     PRESERVE_CONTEXT_ON_EXCEPTION = False
+    DEBUG = True
+    TESTING = True
 
 class DevConfig(BaseConfig):
     SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/people.db'
-    DEBUG = True
     PRESERVE_CONTEXT_ON_EXCEPTION = False
+    DEBUG = True
 
 class ProdConfig(BaseConfig):
     SQLALCHEMY_DATABASE_URI = 'sqlite:///tmp/people_prod.db'

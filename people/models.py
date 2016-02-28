@@ -9,6 +9,12 @@ users_groups = db.Table(
 )
 
 
+class UnknownUserException(Exception):
+    pass
+
+class UnknownGroupException(Exception):
+    pass
+
 class Group(db.Model):
 
     __tablename__ = "groups"
@@ -47,6 +53,8 @@ class User(db.Model):
         groups = []
         for name in group_names:
             group = Group.query.filter(Group.name == name).first()
+            if group is None:
+                raise UnknownGroupException('Group {} does not exist.'.format(name))
             groups.append(group)
 
         return groups

@@ -1,11 +1,18 @@
 from flask import request, abort
 from flask_restful import Resource, reqparse
 from sqlalchemy.exc import IntegrityError
+import werkzeug
 
 from app import db, api
-from models import User, Group
+from models import User, Group, UnknownUserException, UnknownGroupException
 
 class UsersResource(Resource):
+
+    @staticmethod
+    def _serialize_user(user):
+        user_dict = { k: getattr(user, k) for k in ['userid', 'first_name', 'last_name', 'groups'] }
+        user_dict['groups'] = [ g.name for g in user_dict['groups'] ]
+        return user_dict
 
     def get(self, userid):
         """Returns the matching user record or 404 if none exist."""
@@ -13,9 +20,7 @@ class UsersResource(Resource):
         if user is None:
             abort(404)
         else:
-            user_dict = { k: getattr(user, k) for k in ['userid', 'first_name', 'last_name', 'groups'] }
-            user_dict['groups'] = [ g.name for g in user_dict['groups'] ]
-            return user_dict
+            return self._serialize_user(user), 200
 
     def post(self):
         """Creates a new user record.
@@ -54,18 +59,34 @@ class UsersResource(Resource):
 
         args = request.json
 
-        user = User.query.filter(User.userid == args['userid']).first()
-        if user is None:
-            abort(404)
-        else:
-            db.session.delete(user)
+        try:
+
+            # delete original record and all associations
+            original_user = User.query.filter(User.userid == args['userid']).first()
+            if original_user is None:
+                abort(404)
+            else:
+                db.session.delete(original_user)
+
+            # insert updated record with its associations
+            updated_user = User(
+                *[args.get(col, None) for col in ('userid', 'first_name', 'last_name', 'groups')])
+
+            db.session.add(updated_user)
             db.session.commit()
+            return self._serialize_user(updated_user), 200
 
-        updated_user = User(
-            *[ args.get(col, None) for col in ('userid', 'first_name', 'last_name', 'groups') ])
+        except UnknownGroupException as e:
+            db.session.rollback()
+            abort(422)
 
-        db.session.add(updated_user)
-        db.session.commit()
+        except werkzeug.exceptions.HTTPException as e:
+            db.session.rollback()
+            raise e
+
+        except Exception as e:
+            db.session.rollback()
+            abort(500)
 
 class GroupsResource(Resource):
 
@@ -103,16 +124,36 @@ class GroupsResource(Resource):
         """
         userids = request.json
 
-        # delete all old associations with this group
-        self.delete(group_name)
+        try:
 
-        # re-create the group with all POSTed associations
-        group = Group(group_name)
-        db.session.add(group)
-        for userid in userids:
-            member = User.query.filter(User.userid == userid).first()
-            member.groups.append(group)
-        db.session.commit()
+            # delete all old associations with this group
+            group = Group.query.filter(Group.name == group_name).first()
+            if group is None:
+                abort(404)
+            else:
+                db.session.delete(group)
+
+            # re-create the group with associations to all PUT users
+            group = Group(group_name)
+            for userid in userids:
+                member = User.query.filter(User.userid == userid).first()
+                if member is None:
+                    raise UnknownUserException('User {} not found.'.format(userid))
+                member.groups.append(group)
+            db.session.add(group)
+            db.session.commit()
+
+        except werkzeug.exceptions.HTTPException as e:
+            db.session.rollback()
+            raise e
+
+        except UnknownUserException as e:
+            db.session.rollback()
+            abort(422)
+
+        except Exception as e:
+            db.session.rollback()
+            abort(500)
 
     def delete(self, group_name):
         """Deletes a group. Returns 404 if the group doesn't exist."""

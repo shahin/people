@@ -100,5 +100,27 @@ class RESTTestCase(PeopleTestCase):
         response = self.client.delete('/groups/nonexistent')
         self.assertEqual(response.status_code, 404)
 
+    def test_put_user_returns_422_on_unknown_group(self):
+        updated_user = '{"userid": "a", "first_name": "Alfred", "last_name": "Brendel", "groups": ["nonexistent"]}'
+        response = self.client.put('/users/a', data=updated_user, content_type='application/json')
+        self.assertEqual(response.status_code, 422)
+
+    def test_put_user_preserves_original_data_on_error(self):
+        user_before_error = User.query.filter(User.userid == 'a').first()
+
+        bad_user = '{"userid": "a", "first_name": "Alfred", "last_name": "Brendel", "groups": ["nonexistent"]}'
+        response = self.client.put('/users/a', data=bad_user, content_type='application/json')
+
+        user_after_error = User.query.filter(User.userid == 'a').first()
+        self.assertEqual(user_after_error, user_before_error)
+
+    def test_put_group_preserves_original_data_on_error(self):
+        group_before_error = Group.query.filter(Group.name == 'famous').first()
+        response = self.client.put('/groups/famous', data='["nonexistent"]', content_type='application/json')
+        self.assertEqual(response.status_code, 422)
+
+        group_after_error = Group.query.filter(Group.name == 'famous').first()
+        self.assertEqual(group_after_error, group_before_error)
+
 if __name__ == '__main__':
     unittest.main()
