@@ -47,9 +47,9 @@ class User(db.Model):
 
         if group_names is None:  # [] goes through the JSON serialization wringer and becomes None
             group_names = []
-        self.groups = self.add_groups(group_names)
+        self.set_groups(group_names)
 
-    def add_groups(self, group_names):
+    def set_groups(self, group_names):
         groups = []
         for name in group_names:
             group = Group.query.filter(Group.name == name).first()
@@ -57,7 +57,7 @@ class User(db.Model):
                 raise UnknownGroupException('Group {} does not exist.'.format(name))
             groups.append(group)
 
-        return groups
+        self.groups = groups
 
     def __repr__(self):
         return '<User userid={}>'.format(self.userid) 
